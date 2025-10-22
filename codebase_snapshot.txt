@@ -9280,6 +9280,8 @@ export class CalculationService {
             deliveryFee,
             installFee,
             removalFee,
+            acceSum, // [FIX] Added missing acceSum
+            eAcceSum, // [FIX] Added missing eAcceSum
             firstRbPrice,
             disRbPrice,
             sumPrice,
@@ -9931,7 +9933,7 @@ export class WorkflowService {
         this.fileService = fileService;
         this.calculationService = calculationService;
         this.productFactory = productFactory;
-        this.detailConfigView = detailConfigView;
+        this.detailConfigView = detailConfigView; // [FIX] ‰øÆÊ≠£?ºÂØ´?ØË™§ detailConfigViem -> detailConfigView
         this.quotePreviewComponent = null; // Will be set by AppContext
 
         this.f2InputSequence = [
@@ -9968,7 +9970,7 @@ export class WorkflowService {
 
             const detailsStyleContent = styleMatch ? styleMatch[0] : '';
             const detailsBodyContent = detailsBodyMatch[1];
-            
+
             let finalHtml = quoteTemplate.replace('</head>', `${detailsStyleContent}</head>`);
             finalHtml = finalHtml.replace('</body>', `${detailsBodyContent}</body>`);
 
@@ -10007,31 +10009,35 @@ export class WorkflowService {
         if (f3Data.customerEmail) html += `Email: ${f3Data.customerEmail}`;
         return html;
     }
-    
-    // [NEW] Helper method to generate the detailed items table for the appendix.
-    _generateItemsTableHtml(items) {
-        const headers = ['#', 'Location', 'W&nbsp;x&nbsp;H', 'Type', 'F-Name', 'F-Color', 'Options'];
-        
+
+    _generateItemsTableHtml(items, summaryData) {
+        const headers = ['#', 'F-NAME', 'F-COLOR', 'Location', 'HD', 'DUAL', 'MOTOR', 'PRICE'];
+        const mulTimes = summaryData.mulTimes || 1;
+
         const rows = items
             .filter(item => item.width && item.height) // Only include rows with dimensions
             .map((item, index) => {
-                const options = [
-                    item.over, item.oi, item.lr,
-                    item.dual ? "D'Bracket" : '',
-                    item.chain ? `${item.chain}mm` : '',
-                    item.winder ? 'H-Winder' : '',
-                    item.motor || ''
-                ].filter(Boolean).join(', ');
+                const finalPrice = (item.linePrice || 0) * mulTimes;
+
+                let fabricClass = '';
+                if (item.fabric && item.fabric.toLowerCase().includes('light-filter')) {
+                    fabricClass = 'bg-light-filter';
+                } else if (item.fabricType === 'SN') {
+                    fabricClass = 'bg-screen';
+                } else if (['B1', 'B2', 'B3', 'B4', 'B5'].includes(item.fabricType)) {
+                    fabricClass = 'bg-blockout';
+                }
 
                 return `
                     <tr>
                         <td class="text-center">${index + 1}</td>
+                        <td class="${fabricClass}">${item.fabric || ''}</td>
+                        <td class="${fabricClass}">${item.color || ''}</td>
                         <td>${item.location || ''}</td>
-                        <td>${item.width} x ${item.height}</td>
-                        <td>${item.fabricType || ''}</td>
-                        <td>${item.fabric || ''}</td>
-                        <td>${item.color || ''}</td>
-                        <td>${options}</td>
+                        <td class="text-center">${item.winder === 'HD' ? '?? : ''}</td>
+                        <td class="text-center">${item.dual === 'D' ? '?? : ''}</td>
+                        <td class="text-center">${item.motor ? '?? : ''}</td>
+                        <td class="text-right">$${finalPrice.toFixed(2)}</td>
                     </tr>
                 `;
             })
@@ -10054,48 +10060,141 @@ export class WorkflowService {
         `;
     }
 
+    _generatePageOneItemsTableHtml(summaryData, quoteData, ui) {
+        const rows = [];
+        const items = quoteData.products.rollerBlind.items;
+        const validItemCount = items.filter(i => i.width && i.height).length;
+
+        // 1. Roller Blinds Package
+        rows.push(`
+            <tr>
+                <td data-label="#">1</td>
+                <td data-label="Description">
+                    <div class="description"><strong>Roller Blinds Package</strong></div>
+                    <div class="details">See appendix for detailed specifications.</div>
+                </td>
+                <td data-label="QTY" class="align-right">${validItemCount}</td>
+                <td data-label="Price" class="align-right">
+                    <span class="original-price">$${(summaryData.firstRbPrice || 0).toFixed(2)}</span>
+                </td>
+                <td data-label="Discounted Price" class="align-right">
+                    <span class="discounted-price">$${(summaryData.disRbPrice || 0).toFixed(2)}</span>
+                </td>
+            </tr>
+        `);
+
+        let itemNumber = 2;
+
+        // 2. Installation Accessories
+        if (summaryData.acceSum > 0) {
+            rows.push(`
+                <tr>
+                    <td data-label="#">${itemNumber++}</td>
+                    <td data-label="Description">
+                        <div class="description"><strong>Installation Accessories</strong></div>
+                        <div class="details">See appendix for detailed specifications.</div>
+                    </td>
+                    <td data-label="QTY" class="align-right">NA</td>
+                    <td data-label="Price" class="align-right">$${(summaryData.acceSum || 0).toFixed(2)}</td>
+                    <td data-label="Discounted Price" class="align-right">$${(summaryData.acceSum || 0).toFixed(2)}</td>
+                </tr>
+            `);
+        }
+
+        // 3. Motorised Accessories
+        if (summaryData.eAcceSum > 0) {
+            rows.push(`
+                <tr>
+                    <td data-label="#">${itemNumber++}</td>
+                    <td data-label="Description">
+                        <div class="description"><strong>Motorised Accessories</strong></div>
+                        <div class="details">See appendix for detailed specifications.</div>
+                    </td>
+                    <td data-label="QTY" class="align-right">NA</td>
+                    <td data-label="Price" class="align-right">$${(summaryData.eAcceSum || 0).toFixed(2)}</td>
+                    <td data-label="Discounted Price" class="align-right">$${(summaryData.eAcceSum || 0).toFixed(2)}</td>
+                </tr>
+            `);
+        }
+
+        // 4. Delivery
+        const deliveryExcluded = ui.f2.deliveryFeeExcluded;
+        const deliveryPriceClass = deliveryExcluded ? 'class="align-right is-excluded"' : 'class="align-right"';
+        const deliveryDiscountedPrice = deliveryExcluded ? 0 : (summaryData.deliveryFee || 0);
+        rows.push(`
+            <tr>
+                <td data-label="#">${itemNumber++}</td>
+                <td data-label="Description">
+                    <div class="description">Delivery</div>
+                </td>
+                <td data-label="QTY" class="align-right">${ui.f2.deliveryQty || 1}</td>
+                <td data-label="Price" ${deliveryPriceClass}>$${(summaryData.deliveryFee || 0).toFixed(2)}</td>
+                <td data-label="Discounted Price" class="align-right">$${deliveryDiscountedPrice.toFixed(2)}</td>
+            </tr>
+        `);
+
+        // 5. Installation
+        const installExcluded = ui.f2.installFeeExcluded;
+        const installPriceClass = installExcluded ? 'class="align-right is-excluded"' : 'class="align-right"';
+        const installDiscountedPrice = installExcluded ? 0 : (summaryData.installFee || 0);
+        rows.push(`
+            <tr>
+                <td data-label="#">${itemNumber++}</td>
+                <td data-label="Description">
+                    <div class="description">Installation</div>
+                </td>
+                <td data-label="QTY" class="align-right">${validItemCount}</td>
+                <td data-label="Price" ${installPriceClass}>$${(summaryData.installFee || 0).toFixed(2)}</td>
+                <td data-label="Discounted Price" class="align-right">$${installDiscountedPrice.toFixed(2)}</td>
+            </tr>
+        `);
+
+        // 6. Removal
+        const removalExcluded = ui.f2.removalFeeExcluded;
+        const removalPriceClass = removalExcluded ? 'class="align-right is-excluded"' : 'class="align-right"';
+        const removalDiscountedPrice = removalExcluded ? 0 : (summaryData.removalFee || 0);
+        rows.push(`
+            <tr>
+                <td data-label="#">${itemNumber++}</td>
+                <td data-label="Description">
+                    <div class="description">Removal</div>
+                </td>
+                <td data-label="QTY" class="align-right">${ui.f2.removalQty || 0}</td>
+                <td data-label="Price" ${removalPriceClass}>$${(summaryData.removalFee || 0).toFixed(2)}</td>
+                <td data-label="Discounted Price" class="align-right">$${removalDiscountedPrice.toFixed(2)}</td>
+            </tr>
+        `);
+
+        return rows.join('');
+    }
+
 
     _prepareTemplateData(quoteData, ui, f3Data) {
         const summaryData = this.calculationService.calculateF2Summary(quoteData, ui);
-        const grandTotal = parseFloat(f3Data.finalOfferPrice) || summaryData.gst;
+        const grandTotal = parseFloat(f3Data.finalOfferPrice) || summaryData.gst || 0;
         const items = quoteData.products.rollerBlind.items;
 
         return {
-            // Real Data from F3 and calculations
+            // --- Header & Customer Info ---
             quoteId: f3Data.quoteId,
             issueDate: f3Data.issueDate,
             dueDate: f3Data.dueDate,
             customerInfoHtml: this._formatCustomerInfo(f3Data),
-            termsAndConditions: (f3Data.termsConditions || 'Standard terms and conditions apply.').replace(/\n/g, '<br>'),
 
-            subtotal: `$${summaryData.sumPrice.toFixed(2)}`,
-            deliveryFee: `$${summaryData.deliveryFee.toFixed(2)}`,
-            installationFee: `$${summaryData.installFee.toFixed(2)}`,
+            // --- Main Items Table (Implemented in Stage 3) ---
+            itemsTableBody: this._generatePageOneItemsTableHtml(summaryData, quoteData, ui),
+
+            // --- Summary Section ---
+            subtotal: `$${(summaryData.sumPrice || 0).toFixed(2)}`,
             gst: `$${(grandTotal / 1.1 * 0.1).toFixed(2)}`,
             grandTotal: `$${grandTotal.toFixed(2)}`,
             deposit: `$${(grandTotal * 0.5).toFixed(2)}`,
             balance: `$${(grandTotal * 0.5).toFixed(2)}`,
-            savings: `$${(summaryData.firstRbPrice - summaryData.disRbPrice).toFixed(2)}`,
+            savings: `$${((summaryData.firstRbPrice || 0) - (summaryData.disRbPrice || 0)).toFixed(2)}`,
 
-            // Real data for the main items table (first page)
-            itemsTableBody: `
-                <tr>
-                    <td data-label="#">1</td>
-                    <td data-label="Description">
-                        <div class="description">Roller Blinds Package</div>
-                        <div class="details">See appendix for detailed specifications.</div>
-                    </td>
-                    <td data-label="QTY" class="align-right">${items.filter(i => i.width && i.height).length}</td>
-                    <td data-label="Price" class="align-right">
-                        <span class="original-price">$${summaryData.firstRbPrice.toFixed(2)}</span>
-                    </td>
-                    <td data-label="Discounted Price" class="align-right">
-                        <span class="discounted-price">$${summaryData.disRbPrice.toFixed(2)}</span>
-                    </td>
-                </tr>`,
-
-            // [MODIFIED] Real data for the appendix table (second page)
-            rollerBlindsTable: this._generateItemsTableHtml(items),
+            // --- Terms & Appendix ---
+            termsAndConditions: (f3Data.termsConditions || 'Standard terms and conditions apply.').replace(/\n/g, '<br>'),
+            rollerBlindsTable: this._generateItemsTableHtml(items, summaryData), // For appendix page
         };
     }
 
@@ -13470,6 +13569,22 @@ export class UIManager {
             border-top: 2px solid #ccc;
         }
 
+        /* [NEW] Conditional background colors for fabric types */
+        .bg-blockout {
+            background-color: #f0f0f0;
+            /* Light Grey */
+        }
+
+        .bg-screen {
+            background-color: #e0f7fa;
+            /* Light Blue */
+        }
+
+        .bg-light-filter {
+            background-color: #ffe4e1;
+            /* Pink */
+        }
+
         .table-title {
             background-color: var(--header-bg-color);
             color: #333;
@@ -14017,10 +14132,10 @@ export class UIManager {
             --primary-color: #1a237e;
             /* Ê∑±Ë???*/
             --border-color: #e0e0e0;
-            /* Ê∑∫ÁÅ∞?äÊ? */
+            /* Ê∑∫ÁÅ∞?≤È?Ê°?*/
             --text-color: #333;
             --success-color: #2e7d32;
-            /* Á∂†Ëâ≤ÔºåÁî®?ºÁ??ÅÊ?Á§?*/
+            /* Á∂†Ëâ≤ÔºåÁî®?ºÁ??ÅÈ?È°?*/
             --icon-color: #888888;
         }
 
@@ -14174,7 +14289,12 @@ export class UIManager {
             color: #d32f2f;
         }
 
-        /* --- Á∏ΩÁ? --- */
+        .items-table .is-excluded {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        /* --- Á∏ΩË? --- */
         .summary-section {
             display: flex;
             justify-content: flex-end;
@@ -14381,7 +14501,6 @@ export class UIManager {
 </head>
 
 <body>
-
     <div class="quotation-container">
         <div class="quotation-inner-wrapper">
 
@@ -14434,14 +14553,6 @@ export class UIManager {
                                 <tr>
                                     <td class="summary-label">Subtotal</td>
                                     <td class="summary-value">{{subtotal}}</td>
-                                </tr>
-                                <tr>
-                                    <td class="summary-label">Delivery</td>
-                                    <td class="summary-value">{{deliveryFee}}</td>
-                                </tr>
-                                <tr>
-                                    <td class="summary-label">Installation</td>
-                                    <td class="summary-value">{{installationFee}}</td>
                                 </tr>
                                 <tr>
                                     <td class="summary-label">GST (10%)</td>
@@ -14502,7 +14613,6 @@ export class UIManager {
 
         </div>
     </div>
-
 </body>
 
 </html>
