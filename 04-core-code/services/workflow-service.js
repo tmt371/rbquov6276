@@ -150,7 +150,7 @@ export class WorkflowService {
             <tr>
                 <td data-label="#">1</td>
                 <td data-label="Description">
-                    <div class="description">Roller Blinds Package</div>
+                    <div class="description"><strong>Roller Blinds Package</strong></div>
                     <div class="details">See appendix for detailed specifications.</div>
                 </td>
                 <td data-label="QTY" class="align-right">${validItemCount}</td>
@@ -171,10 +171,11 @@ export class WorkflowService {
                 <tr>
                     <td data-label="#">${itemNumber++}</td>
                     <td data-label="Description">
-                        <div class="description">Installation Accessories</div>
+                        <div class="description"><strong>Installation Accessories</strong></div>
+                        <div class="details">See appendix for detailed specifications.</div>
                     </td>
                     <td data-label="QTY" class="align-right">NA</td>
-                    <td data-label="Price" class="align-right"></td>
+                    <td data-label="Price" class="align-right">$${(summaryData.acceSum || 0).toFixed(2)}</td>
                     <td data-label="Discounted Price" class="align-right">$${(summaryData.acceSum || 0).toFixed(2)}</td>
                 </tr>
             `);
@@ -186,19 +187,20 @@ export class WorkflowService {
                 <tr>
                     <td data-label="#">${itemNumber++}</td>
                     <td data-label="Description">
-                        <div class="description">Motorised Accessories</div>
+                        <div class="description"><strong>Motorised Accessories</strong></div>
+                        <div class="details">See appendix for detailed specifications.</div>
                     </td>
                     <td data-label="QTY" class="align-right">NA</td>
-                    <td data-label="Price" class="align-right"></td>
+                    <td data-label="Price" class="align-right">$${(summaryData.eAcceSum || 0).toFixed(2)}</td>
                     <td data-label="Discounted Price" class="align-right">$${(summaryData.eAcceSum || 0).toFixed(2)}</td>
                 </tr>
             `);
         }
 
         // 4. Delivery
-        const deliveryStrikethrough = ui.f2.deliveryFeeExcluded;
-        const deliveryPriceStyle = deliveryStrikethrough ? 'style="text-decoration: line-through;"' : '';
-        const deliveryDiscountedPrice = deliveryStrikethrough ? 0 : (summaryData.deliveryFee || 0);
+        const deliveryExcluded = ui.f2.deliveryFeeExcluded;
+        const deliveryPriceClass = deliveryExcluded ? 'class="align-right is-excluded"' : 'class="align-right"';
+        const deliveryDiscountedPrice = deliveryExcluded ? 0 : (summaryData.deliveryFee || 0);
         rows.push(`
             <tr>
                 <td data-label="#">${itemNumber++}</td>
@@ -206,15 +208,15 @@ export class WorkflowService {
                     <div class="description">Delivery</div>
                 </td>
                 <td data-label="QTY" class="align-right">${ui.f2.deliveryQty || 1}</td>
-                <td data-label="Price" class="align-right" ${deliveryPriceStyle}>$${(summaryData.deliveryFee || 0).toFixed(2)}</td>
+                <td data-label="Price" ${deliveryPriceClass}>$${(summaryData.deliveryFee || 0).toFixed(2)}</td>
                 <td data-label="Discounted Price" class="align-right">$${deliveryDiscountedPrice.toFixed(2)}</td>
             </tr>
         `);
 
         // 5. Installation
-        const installStrikethrough = ui.f2.installFeeExcluded;
-        const installPriceStyle = installStrikethrough ? 'style="text-decoration: line-through;"' : '';
-        const installDiscountedPrice = installStrikethrough ? 0 : (summaryData.installFee || 0);
+        const installExcluded = ui.f2.installFeeExcluded;
+        const installPriceClass = installExcluded ? 'class="align-right is-excluded"' : 'class="align-right"';
+        const installDiscountedPrice = installExcluded ? 0 : (summaryData.installFee || 0);
         rows.push(`
             <tr>
                 <td data-label="#">${itemNumber++}</td>
@@ -222,15 +224,15 @@ export class WorkflowService {
                     <div class="description">Installation</div>
                 </td>
                 <td data-label="QTY" class="align-right">${validItemCount}</td>
-                <td data-label="Price" class="align-right" ${installPriceStyle}>$${(summaryData.installFee || 0).toFixed(2)}</td>
+                <td data-label="Price" ${installPriceClass}>$${(summaryData.installFee || 0).toFixed(2)}</td>
                 <td data-label="Discounted Price" class="align-right">$${installDiscountedPrice.toFixed(2)}</td>
             </tr>
         `);
 
         // 6. Removal
-        const removalStrikethrough = ui.f2.removalFeeExcluded;
-        const removalPriceStyle = removalStrikethrough ? 'style="text-decoration: line-through;"' : '';
-        const removalDiscountedPrice = removalStrikethrough ? 0 : (summaryData.removalFee || 0);
+        const removalExcluded = ui.f2.removalFeeExcluded;
+        const removalPriceClass = removalExcluded ? 'class="align-right is-excluded"' : 'class="align-right"';
+        const removalDiscountedPrice = removalExcluded ? 0 : (summaryData.removalFee || 0);
         rows.push(`
             <tr>
                 <td data-label="#">${itemNumber++}</td>
@@ -238,7 +240,7 @@ export class WorkflowService {
                     <div class="description">Removal</div>
                 </td>
                 <td data-label="QTY" class="align-right">${ui.f2.removalQty || 0}</td>
-                <td data-label="Price" class="align-right" ${removalPriceStyle}>$${(summaryData.removalFee || 0).toFixed(2)}</td>
+                <td data-label="Price" ${removalPriceClass}>$${(summaryData.removalFee || 0).toFixed(2)}</td>
                 <td data-label="Discounted Price" class="align-right">$${removalDiscountedPrice.toFixed(2)}</td>
             </tr>
         `);
