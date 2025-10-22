@@ -17,7 +17,7 @@ export class WorkflowService {
         this.fileService = fileService;
         this.calculationService = calculationService;
         this.productFactory = productFactory;
-        this.detailConfigView = detailConfigViem;
+        this.detailConfigView = detailConfigView; // [FIX] 修正拼寫錯誤 detailConfigViem -> detailConfigView
         this.quotePreviewComponent = null; // Will be set by AppContext
 
         this.f2InputSequence = [
