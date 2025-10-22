@@ -54,7 +54,7 @@ export class WorkflowService {
 
             const detailsStyleContent = styleMatch ? styleMatch[0] : '';
             const detailsBodyContent = detailsBodyMatch[1];
-            
+
             let finalHtml = quoteTemplate.replace('</head>', `${detailsStyleContent}</head>`);
             finalHtml = finalHtml.replace('</body>', `${detailsBodyContent}</body>`);
 
@@ -93,11 +93,11 @@ export class WorkflowService {
         if (f3Data.customerEmail) html += `Email: ${f3Data.customerEmail}`;
         return html;
     }
-    
-    // [NEW] Helper method to generate the detailed items table for the appendix.
+
+    // [NOTE] This method generates the APPENDIX (Page 2) and is kept for future stages.
     _generateItemsTableHtml(items) {
         const headers = ['#', 'Location', 'W&nbsp;x&nbsp;H', 'Type', 'F-Name', 'F-Color', 'Options'];
-        
+
         const rows = items
             .filter(item => item.width && item.height) // Only include rows with dimensions
             .map((item, index) => {
@@ -143,45 +143,30 @@ export class WorkflowService {
 
     _prepareTemplateData(quoteData, ui, f3Data) {
         const summaryData = this.calculationService.calculateF2Summary(quoteData, ui);
-        const grandTotal = parseFloat(f3Data.finalOfferPrice) || summaryData.gst;
+        const grandTotal = parseFloat(f3Data.finalOfferPrice) || summaryData.gst || 0;
         const items = quoteData.products.rollerBlind.items;
 
         return {
-            // Real Data from F3 and calculations
+            // --- Header & Customer Info ---
             quoteId: f3Data.quoteId,
             issueDate: f3Data.issueDate,
             dueDate: f3Data.dueDate,
             customerInfoHtml: this._formatCustomerInfo(f3Data),
-            termsAndConditions: (f3Data.termsConditions || 'Standard terms and conditions apply.').replace(/\n/g, '<br>'),
 
-            subtotal: `$${summaryData.sumPrice.toFixed(2)}`,
-            deliveryFee: `$${summaryData.deliveryFee.toFixed(2)}`,
-            installationFee: `$${summaryData.installFee.toFixed(2)}`,
+            // --- Main Items Table (To be implemented in Stage 3) ---
+            itemsTableBody: '', // Leave blank for now as per plan
+
+            // --- Summary Section ---
+            subtotal: `$${(summaryData.sumPrice || 0).toFixed(2)}`,
             gst: `$${(grandTotal / 1.1 * 0.1).toFixed(2)}`,
             grandTotal: `$${grandTotal.toFixed(2)}`,
             deposit: `$${(grandTotal * 0.5).toFixed(2)}`,
             balance: `$${(grandTotal * 0.5).toFixed(2)}`,
-            savings: `$${(summaryData.firstRbPrice - summaryData.disRbPrice).toFixed(2)}`,
+            savings: `$${((summaryData.firstRbPrice || 0) - (summaryData.disRbPrice || 0)).toFixed(2)}`,
 
-            // Real data for the main items table (first page)
-            itemsTableBody: `
-                <tr>
-                    <td data-label="#">1</td>
-                    <td data-label="Description">
-                        <div class="description">Roller Blinds Package</div>
-                        <div class="details">See appendix for detailed specifications.</div>
-                    </td>
-                    <td data-label="QTY" class="align-right">${items.filter(i => i.width && i.height).length}</td>
-                    <td data-label="Price" class="align-right">
-                        <span class="original-price">$${summaryData.firstRbPrice.toFixed(2)}</span>
-                    </td>
-                    <td data-label="Discounted Price" class="align-right">
-                        <span class="discounted-price">$${summaryData.disRbPrice.toFixed(2)}</span>
-                    </td>
-                </tr>`,
-
-            // [MODIFIED] Real data for the appendix table (second page)
-            rollerBlindsTable: this._generateItemsTableHtml(items),
+            // --- Terms & Appendix ---
+            termsAndConditions: (f3Data.termsConditions || 'Standard terms and conditions apply.').replace(/\n/g, '<br>'),
+            rollerBlindsTable: this._generateItemsTableHtml(items), // For appendix page
         };
     }
 
