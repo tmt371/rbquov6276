@@ -17,7 +17,7 @@ export class WorkflowService {
         this.fileService = fileService;
         this.calculationService = calculationService;
         this.productFactory = productFactory;
-        this.detailConfigView = detailConfigView;
+        this.detailConfigView = detailConfigViem;
         this.quotePreviewComponent = null; // Will be set by AppContext
 
         this.f2InputSequence = [
@@ -196,6 +196,9 @@ export class WorkflowService {
         }
 
         // 4. Delivery
+        const deliveryStrikethrough = ui.f2.deliveryFeeExcluded;
+        const deliveryPriceStyle = deliveryStrikethrough ? 'style="text-decoration: line-through;"' : '';
+        const deliveryDiscountedPrice = deliveryStrikethrough ? 0 : (summaryData.deliveryFee || 0);
         rows.push(`
             <tr>
                 <td data-label="#">${itemNumber++}</td>
@@ -203,12 +206,15 @@ export class WorkflowService {
                     <div class="description">Delivery</div>
                 </td>
                 <td data-label="QTY" class="align-right">${ui.f2.deliveryQty || 1}</td>
-                <td data-label="Price" class="align-right">$${(summaryData.deliveryFee || 0).toFixed(2)}</td>
-                <td data-label="Discounted Price" class="align-right">$${(summaryData.deliveryFee || 0).toFixed(2)}</td>
+                <td data-label="Price" class="align-right" ${deliveryPriceStyle}>$${(summaryData.deliveryFee || 0).toFixed(2)}</td>
+                <td data-label="Discounted Price" class="align-right">$${deliveryDiscountedPrice.toFixed(2)}</td>
             </tr>
         `);
 
         // 5. Installation
+        const installStrikethrough = ui.f2.installFeeExcluded;
+        const installPriceStyle = installStrikethrough ? 'style="text-decoration: line-through;"' : '';
+        const installDiscountedPrice = installStrikethrough ? 0 : (summaryData.installFee || 0);
         rows.push(`
             <tr>
                 <td data-label="#">${itemNumber++}</td>
@@ -216,12 +222,15 @@ export class WorkflowService {
                     <div class="description">Installation</div>
                 </td>
                 <td data-label="QTY" class="align-right">${validItemCount}</td>
-                <td data-label="Price" class="align-right">$${(summaryData.installFee || 0).toFixed(2)}</td>
-                <td data-label="Discounted Price" class="align-right">$${(summaryData.installFee || 0).toFixed(2)}</td>
+                <td data-label="Price" class="align-right" ${installPriceStyle}>$${(summaryData.installFee || 0).toFixed(2)}</td>
+                <td data-label="Discounted Price" class="align-right">$${installDiscountedPrice.toFixed(2)}</td>
             </tr>
         `);
 
         // 6. Removal
+        const removalStrikethrough = ui.f2.removalFeeExcluded;
+        const removalPriceStyle = removalStrikethrough ? 'style="text-decoration: line-through;"' : '';
+        const removalDiscountedPrice = removalStrikethrough ? 0 : (summaryData.removalFee || 0);
         rows.push(`
             <tr>
                 <td data-label="#">${itemNumber++}</td>
@@ -229,8 +238,8 @@ export class WorkflowService {
                     <div class="description">Removal</div>
                 </td>
                 <td data-label="QTY" class="align-right">${ui.f2.removalQty || 0}</td>
-                <td data-label="Price" class="align-right">$${(summaryData.removalFee || 0).toFixed(2)}</td>
-                <td data-label="Discounted Price" class="align-right">$${(summaryData.removalFee || 0).toFixed(2)}</td>
+                <td data-label="Price" class="align-right" ${removalPriceStyle}>$${(summaryData.removalFee || 0).toFixed(2)}</td>
+                <td data-label="Discounted Price" class="align-right">$${removalDiscountedPrice.toFixed(2)}</td>
             </tr>
         `);
 

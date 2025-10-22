@@ -280,6 +280,8 @@ export class CalculationService {
             deliveryFee,
             installFee,
             removalFee,
+            acceSum, // [FIX] Added missing acceSum
+            eAcceSum, // [FIX] Added missing eAcceSum
             firstRbPrice,
             disRbPrice,
             sumPrice,
