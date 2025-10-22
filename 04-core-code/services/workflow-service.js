@@ -140,6 +140,103 @@ export class WorkflowService {
         `;
     }
 
+    _generatePageOneItemsTableHtml(summaryData, quoteData, ui) {
+        const rows = [];
+        const items = quoteData.products.rollerBlind.items;
+        const validItemCount = items.filter(i => i.width && i.height).length;
+
+        // 1. Roller Blinds Package
+        rows.push(`
+            <tr>
+                <td data-label="#">1</td>
+                <td data-label="Description">
+                    <div class="description">Roller Blinds Package</div>
+                    <div class="details">See appendix for detailed specifications.</div>
+                </td>
+                <td data-label="QTY" class="align-right">${validItemCount}</td>
+                <td data-label="Price" class="align-right">
+                    <span class="original-price">$${(summaryData.firstRbPrice || 0).toFixed(2)}</span>
+                </td>
+                <td data-label="Discounted Price" class="align-right">
+                    <span class="discounted-price">$${(summaryData.disRbPrice || 0).toFixed(2)}</span>
+                </td>
+            </tr>
+        `);
+
+        let itemNumber = 2;
+
+        // 2. Installation Accessories
+        if (summaryData.acceSum > 0) {
+            rows.push(`
+                <tr>
+                    <td data-label="#">${itemNumber++}</td>
+                    <td data-label="Description">
+                        <div class="description">Installation Accessories</div>
+                    </td>
+                    <td data-label="QTY" class="align-right">NA</td>
+                    <td data-label="Price" class="align-right"></td>
+                    <td data-label="Discounted Price" class="align-right">$${(summaryData.acceSum || 0).toFixed(2)}</td>
+                </tr>
+            `);
+        }
+
+        // 3. Motorised Accessories
+        if (summaryData.eAcceSum > 0) {
+            rows.push(`
+                <tr>
+                    <td data-label="#">${itemNumber++}</td>
+                    <td data-label="Description">
+                        <div class="description">Motorised Accessories</div>
+                    </td>
+                    <td data-label="QTY" class="align-right">NA</td>
+                    <td data-label="Price" class="align-right"></td>
+                    <td data-label="Discounted Price" class="align-right">$${(summaryData.eAcceSum || 0).toFixed(2)}</td>
+                </tr>
+            `);
+        }
+
+        // 4. Delivery
+        rows.push(`
+            <tr>
+                <td data-label="#">${itemNumber++}</td>
+                <td data-label="Description">
+                    <div class="description">Delivery</div>
+                </td>
+                <td data-label="QTY" class="align-right">${ui.f2.deliveryQty || 1}</td>
+                <td data-label="Price" class="align-right">$${(summaryData.deliveryFee || 0).toFixed(2)}</td>
+                <td data-label="Discounted Price" class="align-right">$${(summaryData.deliveryFee || 0).toFixed(2)}</td>
+            </tr>
+        `);
+
+        // 5. Installation
+        rows.push(`
+            <tr>
+                <td data-label="#">${itemNumber++}</td>
+                <td data-label="Description">
+                    <div class="description">Installation</div>
+                </td>
+                <td data-label="QTY" class="align-right">${validItemCount}</td>
+                <td data-label="Price" class="align-right">$${(summaryData.installFee || 0).toFixed(2)}</td>
+                <td data-label="Discounted Price" class="align-right">$${(summaryData.installFee || 0).toFixed(2)}</td>
+            </tr>
+        `);
+
+        // 6. Removal
+        rows.push(`
+            <tr>
+                <td data-label="#">${itemNumber++}</td>
+                <td data-label="Description">
+                    <div class="description">Removal</div>
+                </td>
+                <td data-label="QTY" class="align-right">${ui.f2.removalQty || 0}</td>
+                <td data-label="Price" class="align-right">$${(summaryData.removalFee || 0).toFixed(2)}</td>
+                <td data-label="Discounted Price" class="align-right">$${(summaryData.removalFee || 0).toFixed(2)}</td>
+            </tr>
+        `);
+
+        return rows.join('');
+    }
+
 
     _prepareTemplateData(quoteData, ui, f3Data) {
         const summaryData = this.calculationService.calculateF2Summary(quoteData, ui);
@@ -153,8 +250,8 @@ export class WorkflowService {
             dueDate: f3Data.dueDate,
             customerInfoHtml: this._formatCustomerInfo(f3Data),
 
-            // --- Main Items Table (To be implemented in Stage 3) ---
-            itemsTableBody: '', // Leave blank for now as per plan
+            // --- Main Items Table (Implemented in Stage 3) ---
+            itemsTableBody: this._generatePageOneItemsTableHtml(summaryData, quoteData, ui),
 
             // --- Summary Section ---
             subtotal: `$${(summaryData.sumPrice || 0).toFixed(2)}`,
