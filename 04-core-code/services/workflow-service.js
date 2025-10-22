@@ -94,18 +94,18 @@ export class WorkflowService {
         return html;
     }
 
-    // [NOTE] This method generates the APPENDIX (Page 2) and is kept for future stages.
+    // [MODIFIED] This method generates the APPENDIX (Page 2) with updated columns and content.
     _generateItemsTableHtml(items) {
-        const headers = ['#', 'Location', 'W&nbsp;x&nbsp;H', 'Type', 'F-Name', 'F-Color', 'Options'];
+        const headers = ['#', 'Location', 'W&nbsp;x&nbsp;H', 'F-Name', 'F-Color', 'Options'];
 
         const rows = items
             .filter(item => item.width && item.height) // Only include rows with dimensions
             .map((item, index) => {
                 const options = [
-                    item.over, item.oi, item.lr,
-                    item.dual ? "D'Bracket" : '',
+                    // [REMOVED] over, oi, lr fields are no longer displayed.
+                    item.dual ? "Dual" : '', // [MODIFIED] Renamed from "D'Bracket"
                     item.chain ? `${item.chain}mm` : '',
-                    item.winder ? 'H-Winder' : '',
+                    item.winder ? 'HD' : '', // [MODIFIED] Renamed from "H-Winder"
                     item.motor || ''
                 ].filter(Boolean).join(', ');
 
@@ -114,7 +114,6 @@ export class WorkflowService {
                         <td class="text-center">${index + 1}</td>
                         <td>${item.location || ''}</td>
                         <td>${item.width} x ${item.height}</td>
-                        <td>${item.fabricType || ''}</td>
                         <td>${item.fabric || ''}</td>
                         <td>${item.color || ''}</td>
                         <td>${options}</td>
