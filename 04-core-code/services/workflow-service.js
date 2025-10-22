@@ -102,11 +102,21 @@ export class WorkflowService {
             .filter(item => item.width && item.height) // Only include rows with dimensions
             .map((item, index) => {
                 const finalPrice = (item.linePrice || 0) * mulTimes;
+
+                let fabricClass = '';
+                if (item.fabric && item.fabric.toLowerCase().includes('light-filter')) {
+                    fabricClass = 'bg-light-filter';
+                } else if (item.fabricType === 'SN') {
+                    fabricClass = 'bg-screen';
+                } else if (['B1', 'B2', 'B3', 'B4', 'B5'].includes(item.fabricType)) {
+                    fabricClass = 'bg-blockout';
+                }
+
                 return `
                     <tr>
                         <td class="text-center">${index + 1}</td>
-                        <td>${item.fabric || ''}</td>
-                        <td>${item.color || ''}</td>
+                        <td class="${fabricClass}">${item.fabric || ''}</td>
+                        <td class="${fabricClass}">${item.color || ''}</td>
                         <td>${item.location || ''}</td>
                         <td class="text-center">${item.winder === 'HD' ? '✓' : ''}</td>
                         <td class="text-center">${item.dual === 'D' ? '✓' : ''}</td>
