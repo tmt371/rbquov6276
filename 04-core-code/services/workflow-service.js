@@ -94,29 +94,24 @@ export class WorkflowService {
         return html;
     }
 
-    // [MODIFIED] This method generates the APPENDIX (Page 2) with updated columns and content.
-    _generateItemsTableHtml(items) {
-        const headers = ['#', 'Location', 'W&nbsp;x&nbsp;H', 'F-Name', 'F-Color', 'Options'];
+    _generateItemsTableHtml(items, summaryData) {
+        const headers = ['#', 'F-NAME', 'F-COLOR', 'Location', 'HD', 'DUAL', 'MOTOR', 'PRICE'];
+        const mulTimes = summaryData.mulTimes || 1;
 
         const rows = items
             .filter(item => item.width && item.height) // Only include rows with dimensions
             .map((item, index) => {
-                const options = [
-                    // [REMOVED] over, oi, lr fields are no longer displayed.
-                    item.dual ? "Dual" : '', // [MODIFIED] Renamed from "D'Bracket"
-                    item.chain ? `${item.chain}mm` : '',
-                    item.winder ? 'HD' : '', // [MODIFIED] Renamed from "H-Winder"
-                    item.motor || ''
-                ].filter(Boolean).join(', ');
-
+                const finalPrice = (item.linePrice || 0) * mulTimes;
                 return `
                     <tr>
                         <td class="text-center">${index + 1}</td>
-                        <td>${item.location || ''}</td>
-                        <td>${item.width} x ${item.height}</td>
                         <td>${item.fabric || ''}</td>
                         <td>${item.color || ''}</td>
-                        <td>${options}</td>
+                        <td>${item.location || ''}</td>
+                        <td class="text-center">${item.winder === 'HD' ? '✓' : ''}</td>
+                        <td class="text-center">${item.dual === 'D' ? '✓' : ''}</td>
+                        <td class="text-center">${item.motor ? '✓' : ''}</td>
+                        <td class="text-right">$${finalPrice.toFixed(2)}</td>
                     </tr>
                 `;
             })
@@ -273,7 +268,7 @@ export class WorkflowService {
 
             // --- Terms & Appendix ---
             termsAndConditions: (f3Data.termsConditions || 'Standard terms and conditions apply.').replace(/\n/g, '<br>'),
-            rollerBlindsTable: this._generateItemsTableHtml(items), // For appendix page
+            rollerBlindsTable: this._generateItemsTableHtml(items, summaryData), // For appendix page
         };
     }
 
